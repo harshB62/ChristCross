@@ -1,0 +1,5 @@
+import { NextResponse } from 'next/server'
+import { getPayloadClient } from '@/payload'
+type Ctx={params:Promise<{id:string}>}
+export async function GET(_req:Request,ctx:Ctx){try{const {id}=await ctx.params;const payload=await getPayloadClient();const event=await payload.findByID({collection:'events',id,depth:0});const responses=await payload.find({collection:'responses',where:{event:{equals:id}},limit:100,sort:'createdAt',depth:0});return NextResponse.json({event,results:responses.docs})}catch(e){console.error(e);return NextResponse.json({error:'Event not found.'},{status:404})}}
+export async function PATCH(req:Request,ctx:Ctx){try{const {id}=await ctx.params;const body=await req.json();if(!['live','ended','draft'].includes(body.status))return NextResponse.json({error:'Invalid status.'},{status:400});const payload=await getPayloadClient();const event=await payload.update({collection:'events',id,data:{status:body.status}});return NextResponse.json({event})}catch(e){console.error(e);return NextResponse.json({error:'Could not update event.'},{status:400})}}
